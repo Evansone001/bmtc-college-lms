@@ -2,7 +2,7 @@ services:
   - type: web
     name: bmtc-college-lms
     env: python
-    buildCommand: pip install -r requirements/production.txt
+    buildCommand: chmod +x build.sh && ./build.sh
     startCommand: gunicorn config.wsgi:application
     envVars:
       - key: PYTHON_VERSION
@@ -19,6 +19,8 @@ services:
         fromDatabase:
           name: bmtc-db
           property: connectionString
+      - key: RESET_MIGRATIONS
+        value: "false"
     healthCheckPath: /health/
     autoDeploy: true
     plan: free
