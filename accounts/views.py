@@ -10,7 +10,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import CreateView
 from django_filters.views import FilterView
 from xhtml2pdf import pisa
-from django_ratelimit.decorators import ratelimit
+from ratelimit.decorators import ratelimit
 import logging
 
 from accounts.decorators import admin_required
