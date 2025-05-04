@@ -2,8 +2,12 @@ services:
   - type: web
     name: bmtc-college-lms
     env: python
-    buildCommand: chmod +x build.sh && ./build.sh
-    startCommand: gunicorn config.wsgi:application
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements/production.txt
+      python manage.py collectstatic --no-input
+      python manage.py migrate
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0
@@ -17,7 +21,7 @@ services:
         value: bmtc-college-lms.onrender.com
       - key: DATABASE_URL
         fromDatabase:
-          name: bmtc-db
+          name: bmtc-college-lms-db
           property: connectionString
       - key: RESET_MIGRATIONS
         value: "false"
@@ -26,7 +30,7 @@ services:
     plan: free
 
 databases:
-  - name: bmtc-db
+  - name: bmtc-college-lms-db
     databaseName: bmtc_college_lms
     user: bmtc_college_lms_user
     plan: free 
