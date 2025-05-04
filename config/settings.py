@@ -53,7 +53,7 @@ THIRD_PARTY_APPS = [
     "crispy_forms",
     "crispy_bootstrap5",
     "django_filters",
-    'django_recaptcha',
+    
 ]
 
 # Custom apps
