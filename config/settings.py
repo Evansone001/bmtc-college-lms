@@ -36,6 +36,7 @@ AUTH_USER_MODEL = "accounts.User"
 # Application definition
 
 DJANGO_APPS = [
+    "captcha",
     "modeltranslation",  # Translation
     "jet.dashboard",
     "jet",
