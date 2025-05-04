@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
 
 from accounts.decorators import admin_required, lecturer_required
 from accounts.models import User, Student
@@ -207,3 +208,7 @@ def unset_current_semester():
     if current_semester:
         current_semester.is_current_semester = False
         current_semester.save()
+
+
+def health_check(request):
+    return HttpResponse("OK", content_type="text/plain")

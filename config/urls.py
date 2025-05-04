@@ -5,6 +5,7 @@ from django.conf.urls.static import static
 from django.views import defaults as default_views
 from django.conf.urls.i18n import i18n_patterns
 from django.views.i18n import JavaScriptCatalog
+from core.views import health_check
 
 admin.site.site_header = "BMTC Admin"
 
@@ -26,6 +27,7 @@ urlpatterns += i18n_patterns(
     path("search/", include("search.urls")),
     path("quiz/", include("quiz.urls")),
     path("payments/", include("payments.urls")),
+    path("health/", health_check, name='health_check'),
 )
 
 
