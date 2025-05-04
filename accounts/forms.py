@@ -131,7 +131,7 @@ class StaffAddForm(UserCreationForm):
 
 
 class StudentAddForm(UserCreationForm):
-    # captcha = ReCaptchaField()
+    captcha = CaptchaField()
     username = forms.CharField(
         max_length=30,
         widget=forms.TextInput(
@@ -372,7 +372,7 @@ class EmailValidationOnForgotPassword(PasswordResetForm):
 
 
 class ParentAddForm(UserCreationForm):
-    captcha = ReCaptchaField()
+    captcha = CaptchaField()
     username = forms.CharField(
         max_length=30,
         widget=forms.TextInput(
