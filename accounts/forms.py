@@ -8,7 +8,7 @@ from django.contrib.auth.forms import PasswordResetForm
 from course.models import Program
 from .models import User, Student, Parent, RELATION_SHIP, LEVEL, GENDERS
 
-from django_recaptcha.fields import ReCaptchaField
+# from captcha.fields import CaptchaField
 
 class StaffAddForm(UserCreationForm):
     username = forms.CharField(
@@ -131,7 +131,7 @@ class StaffAddForm(UserCreationForm):
 
 
 class StudentAddForm(UserCreationForm):
-    # captcha = ReCaptchaField()
+    # captcha = CaptchaField()
     username = forms.CharField(
         max_length=30,
         widget=forms.TextInput(
@@ -377,7 +377,7 @@ class EmailValidationOnForgotPassword(PasswordResetForm):
 
 
 class ParentAddForm(UserCreationForm):
-    captcha = ReCaptchaField()
+    # captcha = CaptchaField()
     username = forms.CharField(
         max_length=30,
         widget=forms.TextInput(

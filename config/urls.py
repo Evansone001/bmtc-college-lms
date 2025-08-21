@@ -12,11 +12,12 @@ admin.site.site_header = "BMTC Admin"
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("i18n/", include("django.conf.urls.i18n")),
+    path("", include("core.urls")),
 ]
 
 urlpatterns += i18n_patterns(
     path("jsi18n/", JavaScriptCatalog.as_view(), name="javascript-catalog"),
-    path("", include("core.urls")),
+    
     path("jet/", include("jet.urls", "jet")),  # Django JET URLS
     path(
         "jet/dashboard/", include("jet.dashboard.urls", "jet-dashboard")

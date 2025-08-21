@@ -33,7 +33,7 @@ SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevents MIME type sniffing
 SECURE_BROWSER_XSS_FILTER = True    # Enables XSS filtering protection
 X_FRAME_OPTIONS = 'DENY'            # Prevents clickjacking by denying embedding in iframes
 
-ALLOWED_HOSTS = ["127.0.0.1", "admissions.bmtc.ac.ke"]
+ALLOWED_HOSTS = ["127.0.0.1", "bmtc-college-lms.onrender.com","admissions.bmtc.ac.ke"]
 
 # change the default user models to our custom model
 AUTH_USER_MODEL = "accounts.User"
@@ -41,6 +41,7 @@ AUTH_USER_MODEL = "accounts.User"
 # Application definition
 
 DJANGO_APPS = [
+    "captcha",
     "modeltranslation",  # Translation
     "jet.dashboard",
     "jet",
@@ -57,7 +58,7 @@ THIRD_PARTY_APPS = [
     "crispy_forms",
     "crispy_bootstrap5",
     "django_filters",
-    'django_recaptcha',
+    
 ]
 
 # Custom apps
