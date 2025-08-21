@@ -28,6 +28,11 @@ SECRET_KEY = config(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=True, cast=bool)
 
+# Content security policy
+SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevents MIME type sniffing
+SECURE_BROWSER_XSS_FILTER = True    # Enables XSS filtering protection
+X_FRAME_OPTIONS = 'DENY'            # Prevents clickjacking by denying embedding in iframes
+
 ALLOWED_HOSTS = ["127.0.0.1", "admissions.bmtc.ac.ke"]
 
 # change the default user models to our custom model
@@ -110,9 +115,17 @@ WSGI_APPLICATION = "config.wsgi.application"
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'bmtc20_25',  # Use the database you created
+        'USER': 'postgres',           # Your PostgreSQL username
+        'PASSWORD': 'twendetukiuke',               # Your PostgreSQL password
+        'HOST': 'localhost',
+        'PORT': '5432',
+        'OPTIONS': {
+            'client_encoding': 'UTF8',
+            'sslmode': 'prefer',
+        },
     }
 }
 
@@ -142,7 +155,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
 
-def gettext(s):
+def gettext(s) -> str:
     return s
 
 
@@ -150,8 +163,7 @@ LANGUAGES = (
     ("en", gettext("English")),
     ("sw-KE", gettext("Kiswahili")),
     ("fr", gettext("French")),
-    ("es", gettext("Spanish")),
-    ("ru", gettext("Russia")),
+    
 )
 
 LOCALE_PATHS = (os.path.join(BASE_DIR, "locale"),)
@@ -240,6 +252,11 @@ LOGGING = {
         }
     },
     "root": {"level": "INFO", "handlers": ["console"]},
+    "loggers": {
+        "django": {"level": "INFO", "handlers": ["console"], "propagate": True},
+        "accounts": {"level": "INFO", "handlers": ["console"], "propagate": True},
+        "accounts.views": {"level": "INFO", "handlers": ["console"], "propagate": True},  # <-- Add this line
+    }
 }
 
 # WhiteNoise configuration
@@ -259,12 +276,12 @@ YEARS = (
     (6, "6"),
 )
 
-BACHELOR_DEGREE = "Diploma"
-MASTER_DEGREE = "Certificate"
+DIPLOMA = "Diploma"
+CERTIFICATE = "Certificate"
 
 LEVEL_CHOICES = (
-    (BACHELOR_DEGREE, _("Diploma")),
-    (MASTER_DEGREE, _("Certificate")),
+    (DIPLOMA, _("Diploma")),
+    (CERTIFICATE, _("Certificate")),
 )
 
 FIRST = "First"

@@ -244,35 +244,40 @@ class StudentAddForm(UserCreationForm):
         required=False,
     )
 
-    # def validate_email(self):
-    #     email = self.cleaned_data['email']
-    #     if User.objects.filter(email__iexact=email, is_active=True).exists():
-    #         raise forms.ValidationError("Email has taken, try another email address. ")
+    def validate_email(self):
+        email = self.cleaned_data['email']
+        if User.objects.filter(email__iexact=email, is_active=True).exists():
+            raise forms.ValidationError("Email has taken, try another email address. ")
 
     class Meta(UserCreationForm.Meta):
         model = User
-
+ 
     @transaction.atomic()
     def save(self, commit=True):
-        user = super().save(commit=False)
-        user.is_student = True
-        user.first_name = self.cleaned_data.get("first_name")
-        user.last_name = self.cleaned_data.get("last_name")
-        user.gender = self.cleaned_data.get("gender")
-        user.address = self.cleaned_data.get("address")
-        user.phone = self.cleaned_data.get("phone")
-        user.address = self.cleaned_data.get("address")
-        user.email = self.cleaned_data.get("email")
+            user = super().save(commit=False)
+            user.is_student = True
+            user.first_name = self.cleaned_data.get("first_name")
+            user.last_name = self.cleaned_data.get("last_name")
+            user.gender = self.cleaned_data.get("gender")
+            user.address = self.cleaned_data.get("address")
+            user.phone = self.cleaned_data.get("phone")
+            user.address = self.cleaned_data.get("address")
+            user.email = self.cleaned_data.get("email")
+            # Generate and assign unique username
+            from .utils import generate_student_id
+            user.username = generate_student_id()
 
-        if commit:
-            user.save()
-            Student.objects.create(
-                student=user,
-                level=self.cleaned_data.get("level"),
-                program=self.cleaned_data.get("program"),
-            )
 
-        return user
+            if commit:
+                user.save()
+                Student.objects.create(
+                    student=user,
+                    unique_student_id=user.username,
+                    level=self.cleaned_data.get("level"),
+                    program=self.cleaned_data.get("program"),
+                )
+
+            return user
 
 
 class ProfileUpdateForm(UserChangeForm):

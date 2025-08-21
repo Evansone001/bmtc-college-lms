@@ -15,7 +15,7 @@ from django.core.cache import cache
 from django.db import DatabaseError, IntegrityError, transaction
 
 
-from accounts.models import FailedEmail
+from accounts.models import FailedEmail, Student, StudentManager
 from core.utils import send_html_email
 
 # set up logging
@@ -91,87 +91,64 @@ def get_lock_key(prefix: str, namespace: Optional[str] = None) -> str:
 @retry_on_failure()
 @transaction.atomic
 def generate_student_id():
-    """ 
-    Generate a unique student ID with proper locking to avoid race conditions.
-    Uses atomic transaction and a distributed lock via cache.
-    Returns:
-       str: Returns a unique student ID in the format "PREFIX-YEAR-XXXX"
-    Raises:
-        IntegrityError: If the lock cannot be acquired or if the ID already exists.
-    """
-
     registered_year: str = datetime.now().strftime("%Y")
-    # Add timestamp to lock key for debugging
-    lock_key: str = get_lock_key(f"student_id_gen_{registered_year}",
-                                  namespace="bmtc_system_1")
-
-    #Try acquire a distributed lock
-    if not cache.add(lock_key, "locked", timeout=30) :       # lock expires in 30 seconds FOR SAFETY
+    lock_key: str = get_lock_key(f"student_id_gen_{registered_year}", namespace="bmtc_system_1")
+ 
+    if not cache.add(lock_key, "locked", timeout=30):
         logger.warning("Failed to acquire lock for student ID generation.")
         raise IntegrityError("Could not acquire lock for student ID generation.")
-    
 
     try:
-        # Get settings with defaults values 
         prefix: str = getattr(settings, 'STUDENT_ID_PREFIX', 'STU')
         padding = getattr(settings, 'STUDENT_ID_PADDING', 4)
 
         User = get_user_model()
-
-        #  find the highest existing ID for this year
-        latest_student = (
+        latest_user = (
             User.objects
             .select_for_update()
-            .filter(student_id__startswith=f"{prefix}-{registered_year}-")
-            .order_by('-student_id')
+            .filter(username__startswith=f"{prefix}-{registered_year}-")
+            .order_by('-username')
             .first()
         )
 
-        if latest_student and latest_student.student_id:
+        if latest_user and latest_user.username:
             try:
-                # Extract the numeric part and increment it
-                current_number: int = int(latest_student.student_id.split('-')[2])
+                current_number: int = int(latest_user.username.split('-')[2])
                 next_number: int = current_number + 1
             except (IndexError, ValueError):
-                # Fallback if parsing fails
-                logger.warning("Failed to parse student ID, falling back to count method.Oops! check format of student id")
-                next_number = (
-                    User.objects
-                    .filter(is_student=True)
-                    .count() + 1
-                )
+                logger.warning("Failed to parse student ID from username. Falling back to count method.")
+                next_number = User.objects.filter(username__startswith=f"{prefix}-{registered_year}-").count() + 1
         else:
-            # No existing students with this year prefix, start from 1
             next_number = 1
 
-        # Generate ID with padding for future growth
-        student_id = f"{prefix}-{registered_year}-{next_number:0{padding}d}"
+        retry_count = 0
+        max_retries = 5
+        while retry_count < max_retries:
+            unique_student_id = f"{prefix}-{registered_year}-{next_number:0{padding}d}"
+            if not Student.objects.filter(unique_student_id=unique_student_id).exists():
+                break
+            retry_count += 1
+            logger.warning(f"Conflict detected for ID {unique_student_id}. Retrying...")
+            next_number += 1
 
-        # verify id uniqueness
-        if User.objects.filter(student_id=student_id).exists():
-            logger.warning(f"Generated ID {student_id} already exists, attempting to resolve...")
-            raise IntegrityError("Generated student ID already exists.")
+        if retry_count == max_retries:
+            raise IntegrityError("Failed to generate a unique student ID after multiple attempts.")
 
-        logger.info(f"Successfully generated student ID: {student_id}")
-        
-        return student_id
-        
-    
+        logger.info(f"Successfully generated student ID: {unique_student_id}")
+        return unique_student_id
+
     except IntegrityError as e:
         logger.error(f"IntegrityError occurred while generating student ID: {str(e)}")
         raise
 
     finally:
-        # Release the lock
         try:
             cache.delete(lock_key)
             logger.info(f"Lock {lock_key} released.")
         except Exception as e:
             logger.error(f"Failed to release lock {lock_key}: {str(e)}")
-            # Optionally, you can raise an exception or log it as needed
-            raise IntegrityError(f"Failed to release lock {lock_key}: {str(e)}")
+            raise IntegrityError(f"Failed to release lock {lock_key}: {str(e)}")@retry_on_failure()
 
-@retry_on_failure()
 @transaction.atomic
 def generate_lecturer_id():
     """
@@ -328,10 +305,10 @@ def send_new_account_email(user, password: str, is_async: bool = True) -> Option
         None if async, True if successful sync send, False if sync send failed
     """
 
+   
     # Create a serializable context for the email
-    context = {
-            "user_name": user.get_full_name(),
-            "username": user.username,
+    context: dict = {
+            "user": user,
             "password": password,
             "login_url": getattr(settings, 'LOGIN_URL', '/login/'),
             "site_name": getattr(settings, 'SITE_NAME', 'BMTC'),
@@ -347,7 +324,7 @@ def send_new_account_email(user, password: str, is_async: bool = True) -> Option
     else:
         template_name = "accounts/email/new_account_confirmation.html"
 
-    email_data= {
+    email_data: dict = {
         "subject": "Your BMTC account confirmation and credentials",
         "recipient_list": [user.email],
         "template_name": template_name,

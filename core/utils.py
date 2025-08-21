@@ -17,10 +17,10 @@ def send_email(user, subject, msg):
     )
 
 
-def send_html_email(subject, recipient_list, template, context):
+def send_html_email(subject, recipient_list, template_name, context):
     """A function responsible for sending HTML email"""
     # Render the HTML template
-    html_message = render_to_string(template, context)
+    html_message = render_to_string(template_name, context)
 
     # Generate plain text version of the email (optional)
     plain_message = strip_tags(html_message)

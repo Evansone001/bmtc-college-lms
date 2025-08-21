@@ -1,9 +1,10 @@
-from django.db import models
-from django.urls import reverse
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.conf import settings
-from django.utils.translation import gettext_lazy as _
+from django.db import models
 from django.db.models import Q
+from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
+
 from PIL import Image
 
 from course.models import Program
@@ -11,13 +12,13 @@ from .validators import ASCIIUsernameValidator
 
 
 # LEVEL_COURSE = "Level course"
-BACHELOR_DEGREE = _("Diploma")
-MASTER_DEGREE = _("Certificate")
+DIPLOMA = _("Diploma")
+CERTIFICATE = _("Certificate")
 
 LEVEL = (
     # (LEVEL_COURSE, "Level course"),
-    (BACHELOR_DEGREE, _("Diploma")),
-    (MASTER_DEGREE, _("Certificate")),
+    (DIPLOMA, _("Diploma")),
+    (CERTIFICATE, _("Certificate")),
 )
 
 FATHER = _("Father")
@@ -150,10 +151,10 @@ class StudentManager(models.Manager):
 
 class Student(models.Model):
     student = models.OneToOneField(User, on_delete=models.CASCADE)
-    # id_number = models.CharField(max_length=20, unique=True, blank=True)
+    unique_student_id = models.CharField(max_length=20, unique=True, blank=True)
     level = models.CharField(max_length=25, choices=LEVEL, null=True)
     program = models.ForeignKey(Program, on_delete=models.CASCADE, null=True)
-
+  
     objects = StudentManager()
 
     class Meta:

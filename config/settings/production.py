@@ -1,3 +1,4 @@
+from config.settings import BASE_DIR
 from .base import *  # noqa
 import dj_database_url
 import os

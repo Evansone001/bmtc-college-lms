@@ -310,7 +310,7 @@ def send_new_account_email(user, password: str, is_async: bool = True) -> Option
 
     # Create a serializable context for the email
     context = {
-            "user_name": user.get_full_name(),
+        
             "username": user.username,
             "password": password,
             "login_url": getattr(settings, 'LOGIN_URL', '/login/'),
