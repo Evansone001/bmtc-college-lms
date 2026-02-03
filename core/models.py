@@ -36,17 +36,6 @@ class NewsAndEventsManager(models.Manager):
     def get_queryset(self):
         return NewsAndEventsQuerySet(self.model, using=self._db)
 
-    def all(self):
-        return self.get_queryset()
-
-    def get_by_id(self, id):
-        qs = self.get_queryset().filter(
-            id=id
-        )  # NewsAndEvents.objects == self.get_queryset()
-        if qs.count() == 1:
-            return qs.first()
-        return None
-
     def search(self, query):
         return self.get_queryset().search(query)
 

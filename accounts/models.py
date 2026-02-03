@@ -73,6 +73,7 @@ class User(AbstractUser):
     is_lecturer = models.BooleanField(default=False)
     is_parent = models.BooleanField(default=False)
     is_dep_head = models.BooleanField(default=False)
+    lecture_id = models.CharField(max_length=20, unique=True, blank=True, null=True)
     gender = models.CharField(max_length=1, choices=GENDERS, blank=True, null=True)
     phone = models.CharField(max_length=60, blank=True, null=True)
     address = models.CharField(max_length=60, blank=True, null=True)
@@ -92,7 +93,10 @@ class User(AbstractUser):
     def get_full_name(self):
         full_name = self.username
         if self.first_name and self.last_name:
-            full_name = self.first_name + " " + self.last_name
+            try:
+                full_name = self.first_name + " " + self.last_name
+            except Exception as e:
+                pass
         return full_name
 
     def __str__(self):

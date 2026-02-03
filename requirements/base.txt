@@ -28,3 +28,7 @@ python-decouple==3.8
 # Payments
 stripe==5.5.0
 gopay==2.0.1
+
+# API Documentation
+drf-yasg==1.21.7  # https://github.com/axnsan12/drf-yasg
+djangorestframework==3.14.0  # https://www.django-rest-framework.org/

@@ -154,84 +154,47 @@ def generate_lecturer_id():
     """
     Generate a unique lecturer ID with proper locking to avoid race conditions.
     Uses atomic transaction and a distributed lock via cache.
-    Returns:
-        str: Returns a unique lecturer ID in the format "PREFIX-YEAR-XXXX"
-    Raises:
-        IntegrityError: If the lock cannot be acquired or if the ID already exists.
     """
-
-    registered_year: str = datetime.now().strftime("%Y")
-    # Add timestamp to lock key for debugging
-    lock_key: str = get_lock_key(f"lecturer_id_gen_{registered_year}",
-                                  namespace="bmtc_system_1")
-
-    #Try acquire a distributed lock
-    if not cache.add(lock_key, "locked", timeout=30) :       # lock expires in 30 seconds FOR SAFETY
-        logger.warning("Failed to acquire lock for lecturer ID generation.")
-        raise IntegrityError("Could not acquire lock for lecturer ID generation.")
-
-
-    try:
-        # Get settings with defaults values 
-        prefix: str = getattr(settings, 'LECTURER_ID_PREFIX', 'LEC')
-        padding = getattr(settings, 'LECTURER_ID_PADDING', 4)
-
+    registered_year = datetime.now().strftime("%Y")
+    lock_key = f"lecturer_id_gen_{registered_year}"
+    
+    # Get settings with defaults
+    prefix = getattr(settings, 'LECTURER_ID_PREFIX', 'LEC')
+    padding = getattr(settings, 'LECTURER_ID_PADDING', 4)
+    
+    with transaction.atomic():
+        # Get the latest lecturer\
         User = get_user_model()
+        from django.db.models.functions import Length
 
-        #  find the highest existing ID for this year
         latest_lecturer = (
             User.objects
-            .select_for_update()
-            .filter(lecturer_id__startswith=f"{prefix}-{registered_year}-")
-            .order_by('-lecturer_id')
+            .filter(is_lecturer=True, lecture_id__regex=r'^[A-Z]+-\d+-\d+$')  # Ensures format matches
+            .annotate(id_length=Length('lecture_id'))
+            .order_by('-id_length', '-lecture_id')
             .first()
         )
-
-        if latest_lecturer and latest_lecturer.lecturer_id:
+                
+        if latest_lecturer and latest_lecturer.lecture_id:
             try:
                 # Extract the numeric part and increment it
-                current_number: int = int(latest_lecturer.lecturer_id.split('-')[2])
-                next_number: int = current_number + 1
-            except (IndexError, ValueError):
-                # Fallback if parsing fails
-                logger.warning("Failed to parse lecturer ID, falling back to count method.Oops! check format of lecturer id")
-                next_number = (
-                    User.objects
-                    .filter(is_lecturer=True)
-                    .count() + 1
-                )
+                current_number = int(latest_lecturer.lecture_id.split('-')[-1])
+                next_number = current_number + 1
+            except (ValueError, IndexError):
+                logger.warning("Failed to parse lecturer ID, using count method")
+                next_number = User.objects.filter(is_lecturer=True).count() + 1
         else:
-            # No existing lecturers with this year prefix, start from 1
             next_number = 1
 
-        # Generate ID with padding for future growth
+        # Generate ID with padding
         lecturer_id = f"{prefix}-{registered_year}-{next_number:0{padding}d}"
 
-        # verify id uniqueness
-        if User.objects.filter(lecturer_id=lecturer_id).exists():
-            logger.warning(f"Generated ID {lecturer_id} already exists, attempting to resolve...")
-            raise IntegrityError("Generated lecturer ID already exists.")
+        # Verify ID uniqueness
+        if User.objects.filter(lecture_id=lecturer_id).exists():
+            logger.warning(f"Generated ID {lecturer_id} already exists, trying again...")
+            return generate_lecturer_id()  # Try again with new number
 
-        logger.info(f"Successfully generated lecturer ID: {lecturer_id}")
-        
         return lecturer_id
-        
-    
-    except IntegrityError as e:
-        logger.error(f"IntegrityError occurred while generating lecturer ID: {str(e)}")
-        raise
-
-    finally:
-        # Release the lock
-        try:
-            cache.delete(lock_key)
-            logger.info(f"Lock {lock_key} released.")
-        except Exception as e:
-            logger.error(f"Failed to release lock {lock_key}: {str(e)}")
-          
-            raise IntegrityError(f"Failed to release lock {lock_key}: {str(e)}")
-       
-
 def generate_student_credentials() -> Tuple[str, str]:
     """
     Generate a unique student ID and password for the user.
