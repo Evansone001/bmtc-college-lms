@@ -108,9 +108,9 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'bmtc20_25',  # Use the database you created
-        'USER': 'postgres',           # Your PostgreSQL username
-        'PASSWORD': 'twendetukiuke',               # Your PostgreSQL password
+        'NAME': '',  # Use the database you created
+        'USER': '',           # Your PostgreSQL username
+        'PASSWORD': '',               # Your PostgreSQL password
         'HOST': 'localhost',
         'PORT': '5432',
         'OPTIONS': {
@@ -305,3 +305,4 @@ SEMESTER_CHOICES = (
     (SECOND, _("Second")),
     (THIRD, _("Third")),
 )
+
